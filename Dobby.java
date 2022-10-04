@@ -303,18 +303,6 @@ public class Dobby {
     }
 
 
-
-    /*
-     * playOpponentMove: read the opponent move, verify they are valid, and execute them. 
-     * If the opponent move is invalid, your program must display the offending move, 
-     * and state the error.
-     * Input:
-     * Output:
-     */
-    void playOpponentMove() {
-
-    }
-
     /*
      * pointsWon: utility function for determining number of points won by current player
      * Input: 
@@ -325,41 +313,123 @@ public class Dobby {
     static int pointsWon(Board[] globalBoardCopy){ //TODO write scoring function in here
         int score = 0;
 
-        // LinkedList<Integer> emptySquares = gamePathTree(square);
+         // board array global board copy
 
-        // int[] points = new int[9]; //storing points for each square in terminalConfig
+        //calculate row scores
 
-        // points[4] = 5; //middle square is best
-        
-        for(int i = 0; i < globalBoardCopy.length; i++) {
-            for (int j = 0; j < globalBoardCopy[i].squares.length; j++) {
-                if((globalBoardCopy[i].squares[j] == 'd')) {
-                    score++;
-                }
-                else if ((globalBoardCopy[i].squares[j] == 'o')) {
-                    score--;
-                }
-            }
+        int[] boardsWon = new int[globalBoardCopy.length];
+        for (int i = 0; i < globalBoardCopy.length; i++) {
+            globalBoardCopy[i].display();
+            boardsWon[i] = globalBoardCopy[i].isBoardAvailable();
         }
+
+
+        int[] row1 = new int[3]; //{0,1,2}
+        for (int i = 0; i < 3; i++) {
+            row1[i] = boardsWon[i];
+            System.out.println(row1);
+        }
+        score += countdo(row1);
+
+        int row2index = 0;
+        int[] row2 = new int[3];  //{3,4,5}
+        for (int i = 3; i < 6; i++) {
+            row2[row2index] = boardsWon[i];
+            row2index++;
+        }
+        score += countdo(row2);
+        
+        int row3index = 0;
+        int[] row3 = new int[3];  //{6,7,8}
+        for (int i = 6; i < 9; i++) {
+            row3[row3index] = boardsWon[i];
+            row3index++;
+        }
+        score += countdo(row3);
+
+        //calculate column scores
+
+        int col1index = 0;
+        int[] col1 = new int[3];  //{0,3,6}
+        for (int i = 0; i < 7; i += 3) {
+            col1[col1index] = boardsWon[i];
+            col1index++;
+        }
+        score += countdo(col1);
+
+        int col2index = 0;
+        int[] col2 = new int[3];  //{1,4,7}
+        for (int i = 1; i < 8; i += 3) {
+            col2[col2index] = boardsWon[i];
+            col2index++;
+        }
+        score += countdo(col2);
+
+        int col3index = 0;
+        int[] col3 = new int[3];  //{2,5,8}
+        for (int i = 2; i < 9; i += 3) {
+            col3[col3index] = boardsWon[i];
+            col3index++;
+        }
+        score += countdo(col3);
+
+
+        //calculate diagonal scores
+
+        int diag1index = 0;
+        int[] diag1 = new int[3]; //{0,4,8}
+        for (int i = 0; i < 9; i+= 4) {
+            diag1[diag1index] = boardsWon[i];
+            diag1index++;
+        }
+        score += countdo(diag1);
+
+        int diag2index = 0;
+        int[] diag2 = new int[3];  //{2,4,6}
+        for (int i = 2; i < 7; i+= 2) {
+            diag2[diag2index] = boardsWon[i];
+            diag2index++;
+        }
+        score += countdo(diag2);
 
 
         return score;
     }
 
-
     /*
-     * utility function to determine validity of a move (opponent or self)
-     * reads input file and tests if valid against globalBoard 
+     * countdo: utility function for counting the o's and d's in a local board
      */
-    boolean isMoveValid(String move) {
-        boolean valid = false;
+    //      returns 0 if the board is not yet won by any player
+    //      returns 1 if the board is won by Dobby
+    //      returns 2 if the board is won by the opponent
+
+    static int countdo(int[] boardsWon){
+        int dcount = 0;
+        int ocount = 0;
+        int score = 0;
 
 
+        for (int i = 0; i<boardsWon.length; i++){
+            if (boardsWon[i] == 1){
+                dcount +=5;
+            }
+            else if (boardsWon[i] == 2){
+                ocount -=5;
+            }
+        }
 
+        if (ocount == 0){
+            score = dcount;
+        }
 
+        else if (dcount == 0){
+            score = ocount;
 
-        return valid;
-    }
+        }
+
+        return score;
+     }
+
 
     /*
      * isGameOver: check if game has ended
@@ -413,7 +483,4 @@ public class Dobby {
 
         return emptySquares;
     }
-
-
-
 }
