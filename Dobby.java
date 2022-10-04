@@ -8,7 +8,7 @@ public class Dobby {
     static File dobbyGo = new File("Dobby.go");
     static boolean on;
     public static Board globalWinners = new Board();
-    static int depth = 1;
+    static int depth = 3;
 
     public static Board[] globalBoard() {
         for(int i = 0; i < 9; i++) {
@@ -178,21 +178,20 @@ public class Dobby {
      */
     public static int minimax(Board[] globalBoardCopy, Board globalWinnersCopy, int board, int localDepth,
      boolean isMaximizing, int alpha, int beta) {
-        int chosenMove = 0;
+        // int chosenMove = 0;
         
         // boolean end = isGameOver(); //TODO determine ending configuration, not end of game
         //isgameover will take the passed in winners 
 
         if(localDepth == Dobby.depth){    // TODO consider winning positions, DEPTH, and other terminal cases
-            return pointsWon(chosenMove, board);
+            return pointsWon(globalBoardCopy);
         }
 
         if(isMaximizing) { //Dobby is playing
             int bestScore = Integer.MIN_VALUE;
             LinkedList<Integer> emptySquares = gamePathTree(globalBoardCopy[board]);
 
-            for(int i = 0; i <= emptySquares.size(); i++) {
-                
+            for(int i = 0; i < emptySquares.size(); i++) {                
                 //make copies of globalBoard and globalBoardWinners
                 Board[] globalBoardCopy2 = new Board[9];
                 for(int j = 0; j < globalBoardCopy.length; j++) {
@@ -335,7 +334,7 @@ public class Dobby {
      * Output:
      *      int points: number of points won by current player
      */
-    static int pointsWon(int square, int localBoard){ //TODO write scoring function in here
+    static int pointsWon(Board[] globalBoardCopy){ //TODO write scoring function in here
         int score = 0;
 
         // LinkedList<Integer> emptySquares = gamePathTree(square);
@@ -343,26 +342,16 @@ public class Dobby {
         // int[] points = new int[9]; //storing points for each square in terminalConfig
 
         // points[4] = 5; //middle square is best
-        switch(square) {
-            case 0:
-                score = 1;
-            case 1:
-                score = 2;
-            case 2:
-                score = 3;
-            case 3:
-                score = 4;
-            case 4:
-                score = 5;
-            case 5:
-                score = 6;
-            case 6:
-                score = 7;
-            case 7:
-                score = 8;
-            case 8:
-                score = 9;
-
+        
+        for(int i = 0; i < globalBoardCopy.length; i++) {
+            for (int j = 0; j < globalBoardCopy[i].squares.length; j++) {
+                if((globalBoardCopy[i].squares[j] == 'd')) {
+                    score++;
+                }
+                else if ((globalBoardCopy[i].squares[j] == 'o')) {
+                    score--;
+                }
+            }
         }
 
 
