@@ -103,7 +103,8 @@ public class Dobby {
         //write move to referee
         try {
             Path movePath = Paths.get("move_file");
-            Files.writeString(movePath, moveFileInput, StandardOpenOption.TRUNCATE_EXISTING);
+            //Files.writeString(movePath, moveFileInput, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(movePath, moveFileInput.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
         }
         catch (IOException e) {
             e.printStackTrace();
