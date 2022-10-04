@@ -18,14 +18,8 @@ public class Board{
      * Input: 
      *      String move: a line in either move_file or first_four_moves
      */
-    int markBoardWithMove(String move, Character ourMoveChar, Board[] globalBoard, boolean on) {
+    static int markBoardWithMove(String move, Character ourMoveChar, Board[] globalBoardCopy, Board globalWinnersCopy) {
 
-        // ---- OLD REFEREE CODE ----
-        // char marker = move.charAt(0); //first character is X or O
-        // int i = Character.getNumericValue(move.charAt(2)); //second character is local board to make the move on
-        // int j = Character.getNumericValue(move.charAt(4)); //third character is square in the local board to mark
-
-        // V4 referee update
         String moves[] = move.split(" ");
         String player = moves[0];
         Character marker = ourMoveChar;
@@ -35,10 +29,9 @@ public class Board{
         if(!player.equals("Dobby")){
             System.out.println("player not Dobby");
             marker = 'o';
-            on = false;
         }
         System.out.println("outside if");
-        Board localBoard = globalBoard[i];
+        Board localBoard = globalBoardCopy[i];
         
         System.out.println("defined localBoard");
         System.out.println(marker);
@@ -48,12 +41,12 @@ public class Board{
         localBoard.display(); 
         System.out.println("next board should be "+j);
 
-        int check = globalBoard[i].isBoardAvailable();
+        int check = globalBoardCopy[i].isBoardAvailable();
         if(check == 1) { //check for any new local wins
-            Dobby.globalWinners.squares[i] = 'd';
+            globalWinnersCopy.squares[i] = 'd';
         }
         else if (check == 2) {
-            Dobby.globalWinners.squares[i] = 'o';
+            globalWinnersCopy.squares[i] = 'o';
         }
 
         return j;

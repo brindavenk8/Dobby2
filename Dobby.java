@@ -8,7 +8,8 @@ public class Dobby {
     static File dobbyGo = new File("Dobby.go");
     static boolean on;
     public static Board globalWinners = new Board();
-    static int depth = 1;
+    static int depth = 3;
+    static boolean exitGracefully = false;
 
     public static Board[] globalBoard() {
         for(int i = 0; i < 9; i++) {
@@ -43,7 +44,7 @@ public class Dobby {
 
                         if(!player.equals("Dobby")) {
                             System.out.println("Opponent's last move: " + lastMove); 
-                            nextBoard = globalBoard[0].markBoardWithMove(lastMove, ourMoveChar, globalBoard, on); //mark our board with opponent move
+                            nextBoard = Board.markBoardWithMove(lastMove, ourMoveChar, globalBoard, globalWinners); //mark our board with opponent move
                             System.out.println("stored opponent's move");
                         }
                     }
@@ -53,7 +54,6 @@ public class Dobby {
                     System.out.println("An error occurred while reading in opponent's move.");
                     e.printStackTrace();
                   }
-                
 
                 dobbyPlays = false;
 
@@ -63,12 +63,8 @@ public class Dobby {
                 System.out.println("Dobby made a move");
                 Thread.sleep(100);
                 
-                
-                
             }
-       
         }
-        
 
     }
 
@@ -78,70 +74,37 @@ public class Dobby {
      * might require helper functions
      */
     static void makeAMove(int currentBoard) throws IOException {
-        System.out.println("Dobby is trying to pick a move to play!");
+        System.out.println("Dobby is trying to pick a move to play! In board #" + currentBoard);
 
         int chosenMove = 0; // square in local board -- we will pick this through minimax with alpha-beta pruning
         int currentBoard2 = currentBoard; 
         int bestScore = Integer.MIN_VALUE;
 
-        Board ourBoard = globalBoard[currentBoard];
-       
-        int winner = ourBoard.isBoardAvailable();
-
         // if currentBoard is won, pick a new local board to play in
-        if(winner == 0) { //board is not won by either player
-            /*
-            LinkedList<Integer> emptySquares = gamePathTree(globalBoard[currentBoard]);
-            chosenMove = emptySquares.getFirst();
-            */
-            minimaxUtil(currentBoard, bestScore);
+        if(globalWinners.squares[currentBoard] == 'd') { //board was won by Dobby -- need to pick a different board to play in
+            System.out.println("Dobby won currentBoard = "+currentBoard+", choosing currentBoard2");
+            currentBoard2 = gamePathTree(globalWinners).getFirst(); //TODO: discuss how to pick this
+            System.out.println("currentBoard2 = "+currentBoard2);
         }
-        else if(winner == 1) { //board was won by Dobby -- need to pick a different board to play in
-            // globalWinners.squares[currentBoard] = 'd';
-            currentBoard2 = gamePathTree(globalWinners).getFirst();
-            chosenMove = gamePathTree(globalBoard[currentBoard2]).getFirst();
-            //call minimaxUtil
+        else if(globalWinners.squares[currentBoard] == 'o') { //board was won by opponent -- need to pick a different board to play in
+            System.out.println("opponnent won currentBoard = "+currentBoard+", choosing currentBoard2");
+            currentBoard2 = gamePathTree(globalWinners).getFirst(); //TODO: discuss how to pick this
+            System.out.println("currentBoard2 = "+currentBoard2);
         }
-        else if(winner == 2) { //board was won by opponent -- need to pick a different board to play in
-            // globalWinners.squares[currentBoard] = 'o';
-            currentBoard2 = gamePathTree(globalWinners).getFirst();
-            chosenMove = gamePathTree(globalBoard[currentBoard2]).getFirst();
-            //call minimaxUtil
-        }
-       
+        else { //board is not won by either player
+            System.out.println("current board has not yet been won (if(winner == 0))");
+        } 
 
-/*
- * 1. find the list of possible locations to play inside the local board < 9
- * 2. within loop
- * 3. make board copy, assign yourself to each location 
- * 4. assess each board-copy - 
- * 3. have a list of values
- * 4. 
- */
-        
-        /*
-        // build the future game path tree based on current board configuration
-        while(!isGameOver()) {
-            if(emptySquares.isEmpty()){
-                //the board is full -- it's a draw
-                //stop expanding this path
-                //utility function for score because terminal state
-            }
-            else {
-    
-                //evaluation function for score because non-terminal state
-            }
-        }
-        */
+        //get and store move from minimax
+        chosenMove = minimaxUtil(currentBoard2, bestScore);
         String moveFileInput = "Dobby " + currentBoard2 + " " + chosenMove;
-
-        globalBoard[currentBoard2].markBoardWithMove(moveFileInput, ourMoveChar, globalBoard, on); 
-       
+        Board.markBoardWithMove(moveFileInput, ourMoveChar, globalBoard, globalWinners); 
+           
+        //write move to referee
         try {
             Path movePath = Paths.get("move_file");
-            //clear file before writing in it
-            Files.writeString(movePath, moveFileInput, StandardOpenOption.TRUNCATE_EXISTING);
-
+            //Files.writeString(movePath, moveFileInput, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(movePath, moveFileInput.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -158,6 +121,7 @@ public class Dobby {
      *      int chosenMove: index of square to play in local board
      */
     public static int minimaxUtil(int board, int bestScore) {
+        System.out.println("beginning minimaxUtil");
         int chosenMove = -1;
 
         // make copies of static global objects
@@ -169,24 +133,26 @@ public class Dobby {
 
         LinkedList<Integer> emptySquares = gamePathTree(globalBoardCopy[board]); // empty squares on local board
         char[] currentSquares = globalBoardCopy[board].squares; // array of all squares in local board
-
-        // bestScore = minimax(globalBoardCopy, globalWinnersCopy, board, depth, false);
+        System.out.println("made copies of globalBoard and globalWinners");
         
         //start the minimax loop
+        System.out.println("starting the minimax for loop");
         for(int i = 0; i < emptySquares.size(); i++){ 
-            // System.out.println("error = " +currentSquares[emptySquares.get(i)]);
+            System.out.println("minimax for loop i = " + i);
             currentSquares[emptySquares.get(i)] = 'd';
-            // ourBoard.squares[i] = 'd';
-            int score = minimax(globalBoardCopy, globalWinnersCopy, board, 0, false, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            System.out.println("doing recursive minimax now for opponent move");
+            int score = minimax(globalBoardCopy, globalWinnersCopy, board, 0, false, 0, 10);
+            System.out.println("ending recursive minimax");
             currentSquares[emptySquares.get(i)] = ' ';
-            // bestScore = Math.max(score, bestScore);
             if(score > bestScore){
+                System.out.println("updating bestScore");
                 bestScore = score;
                 chosenMove = emptySquares.get(i); //create a parallel linkedlist to emptySquares of scores
             } 
         }
 
         //choose a score from parallel list -- based on heuristic function to minimize tree expansion
+        //is there a strategy to send the opponent to a particular local board?
         
         return chosenMove;
     }
@@ -201,23 +167,19 @@ public class Dobby {
      */
     public static int minimax(Board[] globalBoardCopy, Board globalWinnersCopy, int board, int localDepth,
      boolean isMaximizing, int alpha, int beta) {
-        int chosenMove = 0;
         
         // boolean end = isGameOver(); //TODO determine ending configuration, not end of game
         //isgameover will take the passed in winners 
 
         if(localDepth == Dobby.depth){    // TODO consider winning positions, DEPTH, and other terminal cases
-            return pointsWon(chosenMove, board);
+            return pointsWon(globalBoardCopy);
         }
 
         if(isMaximizing) { //Dobby is playing
             int bestScore = Integer.MIN_VALUE;
             LinkedList<Integer> emptySquares = gamePathTree(globalBoardCopy[board]);
 
-            for(int i = 0; i <= emptySquares.size(); i++) {
-                //set i to be new board
-                globalBoardCopy[board].squares[emptySquares.get(i)] = 'd';
-
+            for(int i = 0; i < emptySquares.size(); i++) {                
                 //make copies of globalBoard and globalBoardWinners
                 Board[] globalBoardCopy2 = new Board[9];
                 for(int j = 0; j < globalBoardCopy.length; j++) {
@@ -225,8 +187,15 @@ public class Dobby {
                 }
                 Board globalWinnersCopy2 = globalWinnersCopy.makeBoardCopy();
 
+                //set i to be new board
+                globalBoardCopy2[board].squares[emptySquares.get(i)] = 'd';
+
                 //get opponent's next step score
-                int score = minimax(globalBoardCopy2, globalWinnersCopy2, i, localDepth + 1, false, alpha, beta); 
+                int score = minimax(globalBoardCopy2, globalWinnersCopy2, emptySquares.get(i), localDepth + 1, false, alpha, beta); 
+                
+                //reset copy of board
+                globalBoardCopy2[board].squares[emptySquares.get(i)] = ' ';
+
                 // TODO do the move selection where the minimax is called - that will be one place
                 /*
                 if(score > bestScore){   
@@ -248,9 +217,8 @@ public class Dobby {
             int bestScore = Integer.MAX_VALUE;
             LinkedList<Integer> emptySquares = gamePathTree(globalBoardCopy[board]);
 
-            for(int i = 0; i <= emptySquares.size(); i++) {
-                //set i to be new board
-                globalBoardCopy[board].squares[i] = 'd';
+            for(int i = 0; i < emptySquares.size(); i++) {
+                
 
                 //make copies of globalBoard and globalBoardWinners
                 Board[] globalBoardCopy2 = new Board[9];
@@ -259,8 +227,17 @@ public class Dobby {
                 }
                 Board globalWinnersCopy2 = globalWinnersCopy.makeBoardCopy();
 
+                //set i to be new board
+                globalBoardCopy2[board].squares[emptySquares.get(i)] = 'o';
+
                 //get Dobby's next step score
-                int score = minimax(globalBoardCopy2, globalWinnersCopy2, i, localDepth + 1, true, alpha, beta); 
+                int test = emptySquares.get(i);
+                System.out.println("test = "+test);
+                int score = minimax(globalBoardCopy2, globalWinnersCopy2, test, localDepth + 1, true, alpha, beta); 
+                
+                //reset copy of board
+                globalBoardCopy2[board].squares[emptySquares.get(i)] = ' ';
+
                 /*
                 if(score < bestScore){ // get min of score, bestScore
                     bestScore = score;
@@ -304,7 +281,7 @@ public class Dobby {
                             String move = scanner.nextLine();
                             System.out.println("move: " + move);
                             //mark the board -- helper
-                            nextBoard = globalBoard[0].markBoardWithMove(move, ourMoveChar, globalBoard, on); //update our board with the first four moves provided   
+                            nextBoard = Board.markBoardWithMove(move, ourMoveChar, globalBoard, globalWinners); //update our board with the first four moves provided   
                             System.out.println("marked a move");
                             }
                             initialized = true;
@@ -345,7 +322,7 @@ public class Dobby {
      * Output:
      *      int points: number of points won by current player
      */
-    static int pointsWon(int square, int localBoard){ //TODO write scoring function in here
+    static int pointsWon(Board[] globalBoardCopy){ //TODO write scoring function in here
         int score = 0;
 
         // LinkedList<Integer> emptySquares = gamePathTree(square);
@@ -353,26 +330,16 @@ public class Dobby {
         // int[] points = new int[9]; //storing points for each square in terminalConfig
 
         // points[4] = 5; //middle square is best
-        switch(square) {
-            case 0:
-                score = 0;
-            case 1:
-                score = 1;
-            case 2:
-                score = 2;
-            case 3:
-                score = 3;
-            case 4:
-                score = 4;
-            case 5:
-                score = 5;
-            case 6:
-                score = 6;
-            case 7:
-                score = 7;
-            case 8:
-                score = 8;
-
+        
+        for(int i = 0; i < globalBoardCopy.length; i++) {
+            for (int j = 0; j < globalBoardCopy[i].squares.length; j++) {
+                if((globalBoardCopy[i].squares[j] == 'd')) {
+                    score++;
+                }
+                else if ((globalBoardCopy[i].squares[j] == 'o')) {
+                    score--;
+                }
+            }
         }
 
 
@@ -417,31 +384,6 @@ public class Dobby {
         return end;
     }
 
-    //IRRELEVANT FUNCTION
-    static void getFakeMoves() throws IOException {
-         // ---- FOR TESTING BEFORE TRYING MINIMAX -----
-         String fakeDobbyMove = "";
-                
-         try { //get our FAKE move
-             System.out.println("waiting for the team to input a move");
-             File fakeMoves = new File("FakeDobbyMoves.txt");
-             Scanner scanner = new Scanner(fakeMoves);
-             fakeDobbyMove = scanner.nextLine(); //get our FAKE move
-             System.out.println(fakeDobbyMove); 
-             new FileOutputStream(fakeMoves).close();
-             scanner.close();         
-           } 
-           catch (FileNotFoundException e) {
-             System.out.println("An error occurred while reading in our FAKE move.");
-             e.printStackTrace();
-           }
-
-         globalBoard[0].markBoardWithMove(fakeDobbyMove, ourMoveChar, globalBoard, on); //mark our board with our FAKE move
-
-          // ---- DELETE UNTIL HERE AFTER MINIMAX IS IMPLEMENTED ----
-
-    }
-
     /*
      * input: localBoard (determined by last move played by opponent)
      */
@@ -451,7 +393,9 @@ public class Dobby {
         //TODO: eventually implement heuristic to determine when to stop
         LinkedList<Integer> emptySquares = new LinkedList<Integer>();
         // Board currentBoard = globalBoard[localBoard];
+        System.out.println("displaying currentBoard = " + currentBoard);
         currentBoard.display();
+        System.out.println("-----------------");
         for(int i = 0; i <= 8; i++){ //discovering all empty squares in the current local board being played
             System.out.println(currentBoard.squares[i]);
             if((currentBoard.squares[i] == 'd') || (currentBoard.squares[i] == 'o')){
@@ -462,6 +406,7 @@ public class Dobby {
             }
         }
     
+        System.out.println("indices of empty squares in current local board, board = " + currentBoard);
         for(int i = 0; i < emptySquares.size(); i++){ //discovering all empty squares in the current local board being played
             System.out.println(emptySquares.get(i));
         }
