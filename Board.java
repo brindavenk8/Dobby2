@@ -1,12 +1,14 @@
+import java.util.*;
+
 public class Board{
     char[] squares = new char[9];
 
 
 
     public void display() {
-        System.out.println(squares[0] + "-" + squares[1] + "-" + squares[2]);
-        System.out.println(squares[3] + "-" + squares[4] + "-" + squares[5]);
-        System.out.println(squares[6] + "-" + squares[7] + "-" + squares[8]);
+        System.out.println(squares[0] + " " + squares[1] + " " + squares[2]);
+        System.out.println(squares[3] + " " + squares[4] + " " + squares[5]);
+        System.out.println(squares[6] + " " + squares[7] + " " + squares[8]);
     }
 
     public char[] getSquares() {
@@ -45,7 +47,7 @@ public class Board{
         localBoard.getSquares()[j] = marker; 
         System.out.println("marked board");
 
-        localBoard.display(); 
+        localBoard.display(); //TODO make display more intuitive
         System.out.println("next board should be "+j);
 
         int check = globalBoard[i].isBoardAvailable();
@@ -128,21 +130,29 @@ public class Board{
         return winner;
     }
 
-    /*
-     * utility function to make a copy of a local board
-     * used in minimax to manipulate future possible board configurations without altering static global variables
-     */
-    public Board makeBoardCopy() {
-        Board copy = new Board();
-        char[] squaresCopy = squares;
 
-        for(int i = 0; i < 9; i++) {
-            squaresCopy[i] = squares[i];
-        }
-        copy.squares = squaresCopy;
 
-        return copy;
-    }
 
+    // List adjacencies;
+    // boolean visited;
+    // boolean pruned;
+
+    // // constructor for keeping track of game
+    // public Board(char[] squares) {
+    //     this.squares = squares;
+    // }
+
+    // //constructor for expanding game tree
+    // public Board(char[] squares, List adjacencies, boolean visited, boolean pruned) {
+    //     this.squares = squares;
+    //     this.adjacencies = adjacencies;
+    //     this.visited = visited;
+    //     this.pruned = pruned;
+    // }
+
+
+    // public void addNext(Board next) {
+    //     this.adjacencies.add(next);
+    // }
 
 }
