@@ -154,6 +154,8 @@ public class Dobby {
         }
 */
         String moveFileInput = "Dobby " + currentBoard2 + " " + chosenMove;
+        int testScore = pointsWon(chosenMove, currentBoard2);
+        System.out.println("TESTING OUR UTILITY FUNCTION ON THIS MOVE. testScore = "+testScore);
 
         globalBoard[currentBoard2].markBoardWithMove(moveFileInput, ourMoveChar, globalBoard, on); 
         //is Dobby writing to move_file properly?
