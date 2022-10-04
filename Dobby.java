@@ -9,6 +9,7 @@ public class Dobby {
     static boolean on;
     public static Board globalWinners = new Board();
     static int depth = 3;
+    static boolean exitGracefully = false;
 
     public static Board[] globalBoard() {
         for(int i = 0; i < 9; i++) {
@@ -82,36 +83,26 @@ public class Dobby {
         // if currentBoard is won, pick a new local board to play in
         if(globalWinners.squares[currentBoard] == 'd') { //board was won by Dobby -- need to pick a different board to play in
             System.out.println("Dobby won currentBoard = "+currentBoard+", choosing currentBoard2");
-            // globalWinners.squares[currentBoard] = 'd';
-            currentBoard2 = gamePathTree(globalWinners).getFirst();
+            currentBoard2 = gamePathTree(globalWinners).getFirst(); //TODO: discuss how to pick this
             System.out.println("currentBoard2 = "+currentBoard2);
-            chosenMove = gamePathTree(globalBoard[currentBoard2]).getFirst();
-            //call minimaxUtil
         }
         else if(globalWinners.squares[currentBoard] == 'o') { //board was won by opponent -- need to pick a different board to play in
-            // globalWinners.squares[currentBoard] = 'o';
             System.out.println("opponnent won currentBoard = "+currentBoard+", choosing currentBoard2");
-            currentBoard2 = gamePathTree(globalWinners).getFirst();
+            currentBoard2 = gamePathTree(globalWinners).getFirst(); //TODO: discuss how to pick this
             System.out.println("currentBoard2 = "+currentBoard2);
-            chosenMove = gamePathTree(globalBoard[currentBoard2]).getFirst();
-            //call minimaxUtil
         }
         else { //board is not won by either player
-            /*
-            LinkedList<Integer> emptySquares = gamePathTree(globalBoard[currentBoard]);
-            chosenMove = emptySquares.getFirst();
-            */
             System.out.println("current board has not yet been won (if(winner == 0))");
-            chosenMove = minimaxUtil(currentBoard, bestScore);
         } 
 
+        //get and store move from minimax
+        chosenMove = minimaxUtil(currentBoard2, bestScore);
         String moveFileInput = "Dobby " + currentBoard2 + " " + chosenMove;
-
         Board.markBoardWithMove(moveFileInput, ourMoveChar, globalBoard, globalWinners); 
-               
+           
+        //write move to referee
         try {
             Path movePath = Paths.get("move_file");
-            //clear file before writing in it
             Files.writeString(movePath, moveFileInput, StandardOpenOption.TRUNCATE_EXISTING);
         }
         catch (IOException e) {
@@ -142,20 +133,16 @@ public class Dobby {
         LinkedList<Integer> emptySquares = gamePathTree(globalBoardCopy[board]); // empty squares on local board
         char[] currentSquares = globalBoardCopy[board].squares; // array of all squares in local board
         System.out.println("made copies of globalBoard and globalWinners");
-        // bestScore = minimax(globalBoardCopy, globalWinnersCopy, board, depth, false);
         
         //start the minimax loop
         System.out.println("starting the minimax for loop");
         for(int i = 0; i < emptySquares.size(); i++){ 
             System.out.println("minimax for loop i = " + i);
-            // System.out.println("error = " +currentSquares[emptySquares.get(i)]);
             currentSquares[emptySquares.get(i)] = 'd';
-            // ourBoard.squares[i] = 'd';
             System.out.println("doing recursive minimax now for opponent move");
             int score = minimax(globalBoardCopy, globalWinnersCopy, board, 0, false, 0, 10);
             System.out.println("ending recursive minimax");
             currentSquares[emptySquares.get(i)] = ' ';
-            // bestScore = Math.max(score, bestScore);
             if(score > bestScore){
                 System.out.println("updating bestScore");
                 bestScore = score;
@@ -164,6 +151,7 @@ public class Dobby {
         }
 
         //choose a score from parallel list -- based on heuristic function to minimize tree expansion
+        //is there a strategy to send the opponent to a particular local board?
         
         return chosenMove;
     }
@@ -178,7 +166,6 @@ public class Dobby {
      */
     public static int minimax(Board[] globalBoardCopy, Board globalWinnersCopy, int board, int localDepth,
      boolean isMaximizing, int alpha, int beta) {
-        // int chosenMove = 0;
         
         // boolean end = isGameOver(); //TODO determine ending configuration, not end of game
         //isgameover will take the passed in winners 
