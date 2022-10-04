@@ -145,7 +145,6 @@ public class Dobby {
         char[] currentSquares = globalBoardCopy[board].squares; // array of all squares in local board
         
 
-
         //start the minimax loop
         for(int i = 0; i < emptySquares.size(); i++){ 
             currentSquares[emptySquares.get(i)] = 'd';
@@ -153,8 +152,10 @@ public class Dobby {
             currentSquares[emptySquares.get(i)] = ' ';
             if(score > bestScore){
                 bestScore = score;
-                chosenMove = emptySquares.get(i); //create a parallel linkedlist to emptySquares of scores
-            } 
+                chosenMove = emptySquares.get(i); 
+            } else if (score == bestScore) {
+                chosenMove = emptySquares.get(i);
+            }
         }
 
         //TODO choose a score from parallel list -- based on heuristic function to minimize tree expansion
@@ -438,7 +439,7 @@ public class Dobby {
         System.out.println("displaying currentBoard = " + currentBoard);
         currentBoard.display();
         System.out.println("-----------------");
-        
+
         //printing for debugging purposes
         for(int i = 0; i <= 8; i++){ //discovering all empty squares in the current local board being played
             System.out.println(currentBoard.squares[i]);
