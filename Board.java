@@ -2,7 +2,10 @@ public class Board{
     char[] squares = new char[9];
 
 
-
+    /*
+     * utility function for debugging purposes
+     * display the AI's version of any local Board
+     */
     public void display() {
         System.out.println(squares[0] + "-" + squares[1] + "-" + squares[2]);
         System.out.println(squares[3] + "-" + squares[4] + "-" + squares[5]);
@@ -26,10 +29,18 @@ public class Board{
         int i = Character.getNumericValue(moves[1].charAt(0)); //board
         int j = Character.getNumericValue(moves[2].charAt(0)); //square
         System.out.println(player + " " + i + " " + j);
+        /*
         if(!player.equals("Dobby")){
             System.out.println("player not Dobby");
             marker = 'o';
         }
+        */
+
+        if(!player.equals(Dobby.aiPlayerName)) {
+            System.out.println("Player is not " + Dobby.aiPlayerName);
+            marker = 'o';
+        }
+
         System.out.println("outside if");
         Board localBoard = globalBoardCopy[i];
         
@@ -42,11 +53,15 @@ public class Board{
         System.out.println("next board should be "+j);
 
         int check = globalBoardCopy[i].isBoardAvailable();
-        if(check == 1) { //check for any new local wins
+        //check for any new local wins
+        if(check == 1) { // AI won
             globalWinnersCopy.squares[i] = 'd';
         }
-        else if (check == 2) {
+        else if (check == 2) { // opponent won
             globalWinnersCopy.squares[i] = 'o';
+        }
+        else if (check == 3) { // draw
+            globalWinnersCopy.squares[i] = 'w';
         }
 
         return j;
@@ -58,6 +73,7 @@ public class Board{
      * returns 0 if the board is not yet won by any player
      * returns 1 if the board is won by Dobby
      * returns 2 if the board is won by the opponent
+     * returns 3 if the board was a draw
      */
     public int isBoardAvailable() {
         int available = 0;
@@ -94,6 +110,11 @@ public class Board{
             //diag win
             return available;
         }
+        else if (Dobby.gamePathTree(this).isEmpty()) {
+            // have not found a win and there are no empty squares
+            available = 3;
+            return available;
+        } 
 
         return available;
     }

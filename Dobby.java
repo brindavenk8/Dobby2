@@ -5,7 +5,8 @@ import java.nio.file.*;
 public class Dobby {
     static Board[] globalBoard = new Board[9];
     static char ourMoveChar = 'd';
-    static File dobbyGo = new File("Dobby.go");
+    // static File dobbyGo = new File("Dobby.go");
+    public static String aiPlayerName = "Dobby";
     static boolean on;
     public static Board globalWinners = new Board();
     static int depth = 3;
@@ -20,15 +21,37 @@ public class Dobby {
 
     public static void main(String[] args) throws IOException, InterruptedException{
         System.out.println("running main!");
+
+        // process command-line arguments
+        if(args.length == 1) {
+            aiPlayerName = args[0];
+            System.out.println("Player name specified: " + aiPlayerName + ". MiniMax Depth: 3 (default -- original AI)");
+        }
+        else if (args.length > 1) {
+            aiPlayerName = args[0];
+            try {
+                depth = Integer.parseInt(args[1]);
+            } catch (NumberFormatException e) {
+                System.err.println("Argument" + args[1] + " must be an integer.");
+                System.exit(1);
+            }
+            System.out.println("Player name specified: " + aiPlayerName + ". MiniMax Depth: " + depth + ". (specified -- tournament AI)");
+        }
+        File aiPlayerGo = new File(aiPlayerName + ".go");
+
+
         int nextBoard = initializeBoard(); //play first four moves provided by referee
         System.out.println("initialized board");
 
-        while(!isGameOver()){ // loop to play the game with Dobby 
-            boolean dobbyPlays = dobbyGo.exists();
+        // loop to play the game with Dobby
+        while(!isGameOver()){  
+            System.out.println("inside game loop");
+            // boolean dobbyPlays = dobbyGo.exists();
+            boolean dobbyPlays = aiPlayerGo.exists();
             on = true;
             
             if(dobbyPlays){
-                
+                System.out.println("inside aiPlayerName if-statement");                
                 String lastMove = ""; //the last move that was played by the opponent
                 
                 //get opponent's last move
@@ -40,8 +63,14 @@ public class Dobby {
                         String moves[] = lastMove.split(" ");
                         String player = moves[0];
                        
-
+                        /*
                         if(!player.equals("Dobby")) {
+                            System.out.println("Opponent's last move: " + lastMove); 
+                            nextBoard = Board.markBoardWithMove(lastMove, ourMoveChar, globalBoard, globalWinners); //mark our board with opponent move
+                            System.out.println("stored opponent's move");
+                        }
+                        */
+                        if(!player.equals(aiPlayerName)) {
                             System.out.println("Opponent's last move: " + lastMove); 
                             nextBoard = Board.markBoardWithMove(lastMove, ourMoveChar, globalBoard, globalWinners); //mark our board with opponent move
                             System.out.println("stored opponent's move");
@@ -57,9 +86,11 @@ public class Dobby {
                 dobbyPlays = false;
 
                 // Dobby plays!
-                System.out.println("Dobby will make a move in board #" + nextBoard);
+                // System.out.println("Dobby will make a move in board #" + nextBoard);
+                System.out.println(aiPlayerName + " will make a move in board #" + nextBoard);
                 makeAMove(nextBoard); //minimax with alpha-beta pruning
-                System.out.println("Dobby made a move");
+                // System.out.println("Dobby made a move");
+                System.out.println(aiPlayerName + " made a move");
                 Thread.sleep(100);
                 
             }
@@ -73,7 +104,8 @@ public class Dobby {
      * might require helper functions
      */
     static void makeAMove(int currentBoard) throws IOException {
-        System.out.println("Dobby is trying to pick a move to play! In board #" + currentBoard);
+        // System.out.println("Dobby is trying to pick a move to play! In board #" + currentBoard);
+        System.out.println(aiPlayerName + " is trying to pick a move to play! In board #" + currentBoard);
 
         Thread thread = new Thread(){
             public void run() {
@@ -91,14 +123,15 @@ public class Dobby {
         int currentBoard2 = currentBoard; 
         int bestScore = Integer.MIN_VALUE;
 
-        // if currentBoard is won, pick a new local board to play in
-        if(globalWinners.squares[currentBoard] == 'd') { //board was won by Dobby -- need to pick a different board to play in
-            System.out.println("Dobby won currentBoard = "+currentBoard+", choosing currentBoard2");
+        // if currentBoard is won or a draw, pick a new local board to play in
+        if((globalWinners.squares[currentBoard] == 'd') || (globalWinners.squares[currentBoard] == 'w')) { //board was won by Dobby -- need to pick a different board to play in
+            // System.out.println("Dobby won currentBoard = "+currentBoard+", choosing currentBoard2");
+            System.out.println(aiPlayerName + " won currentBoard = " + currentBoard + ", choosing currentBoard2");
             currentBoard2 = gamePathTree(globalWinners).getFirst(); //TODO: discuss how to pick this
             System.out.println("currentBoard2 = "+currentBoard2);
         }
         else if(globalWinners.squares[currentBoard] == 'o') { //board was won by opponent -- need to pick a different board to play in
-            System.out.println("opponnent won currentBoard = "+currentBoard+", choosing currentBoard2");
+            System.out.println("opponent won currentBoard = "+currentBoard+", choosing currentBoard2");
             currentBoard2 = gamePathTree(globalWinners).getFirst(); //TODO: discuss how to pick this
             System.out.println("currentBoard2 = "+currentBoard2);
         }
@@ -108,7 +141,8 @@ public class Dobby {
 
         //get and store move from minimax
         chosenMove = minimaxUtil(currentBoard2, bestScore);
-        String moveFileInput = "Dobby " + currentBoard2 + " " + chosenMove;
+        // String moveFileInput = "Dobby " + currentBoard2 + " " + chosenMove;
+        String moveFileInput = aiPlayerName + " " + currentBoard2 + " " + chosenMove;
         Board.markBoardWithMove(moveFileInput, ourMoveChar, globalBoard, globalWinners); 
            
         //write move to referee
@@ -148,7 +182,7 @@ public class Dobby {
         //start the minimax loop
         for(int i = 0; i < emptySquares.size(); i++){ 
             currentSquares[emptySquares.get(i)] = 'd';
-            int score = minimax(globalBoardCopy, globalWinnersCopy, board, 0, false, 0, 10);
+            int score = minimax(globalBoardCopy, globalWinnersCopy, board, 0, false, -15, 15);
             currentSquares[emptySquares.get(i)] = ' ';
             if(score > bestScore){
                 bestScore = score;
@@ -174,11 +208,12 @@ public class Dobby {
      */
     public static int minimax(Board[] globalBoardCopy, Board globalWinnersCopy, int board, int localDepth,
      boolean isMaximizing, int alpha, int beta) {
-        
+        System.out.println("checking end conditions --------------------");
         if(localDepth == Dobby.depth || exitGracefully){ 
             exitGracefully = false;   
             return pointsWon(globalBoardCopy);
         }
+        System.out.println("done checking end conditions --------------------");
 
         if(isMaximizing) { //Dobby is playing
             int bestScore = Integer.MIN_VALUE;
@@ -443,7 +478,7 @@ public class Dobby {
         //printing for debugging purposes
         for(int i = 0; i <= 8; i++){ //discovering all empty squares in the current local board being played
             System.out.println(currentBoard.squares[i]);
-            if((currentBoard.squares[i] == 'd') || (currentBoard.squares[i] == 'o')){
+            if((currentBoard.squares[i] == 'd') || (currentBoard.squares[i] == 'o') || (currentBoard.squares[i] == 'w')){
                 
             }
             else {
